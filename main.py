@@ -4,11 +4,21 @@ import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
 
+from pinecone import Pinecone
+
+from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.llms.gemini import Gemini
 from llama_index.vector_stores.pinecone import PineconeVectorStore
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
+from llama_index.core import Settings
 from llama_index.core import VectorStoreIndex
 from llama_index.core import StorageContext
-from pinecone import Pinecone
+
+
+def stream_data(stream):
+    for r in stream:
+        yield r.raw['content']['parts'][0]['text'] + ""
 
 ### Set config ###
 st.set_page_config(
@@ -44,21 +54,33 @@ except:
 ### LLM ###
 llm = Gemini()
 
+### Embeddings ###
+embed_model = HuggingFaceEmbedding(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
+### Settings ###
+Settings.llm = llm
+Settings.embed_model = embed_model
+
 ### Pinecone setup ###
 pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
-# pinecone_index = pc.Index("chatuni")
+pinecone_index = pc.Index("pdfsnew")
 
-# ### Pinecone vector store ###
-# vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
-# ### Storage context ###
-# storage_context = StorageContext.from_defaults(vector_store=vector_store)
-# ### Index ###
-# index = VectorStoreIndex.from_storage_context(storage_context=storage_context, llm=llm)
-
+### Pinecone vector store ###
+vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
+index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
+query_engine = index.as_query_engine()
 
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "history" not in st.session_state:
+    st.session_state.history = [
+    ChatMessage(role="user", content="Hola. Que tal?"),
+    ChatMessage(role="assistant", content="Hola, soy un asistente virtual que te ayudará a revisar las resoluciones rectorales de la UNI."),
+]
 
 # Display chat messages from history on app rerun
 for message in st.session_state.messages:
@@ -70,17 +92,34 @@ if prompt := st.chat_input("What is up?"):
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    st.session_state.messages.append({"role":MessageRole.USER, "content": prompt})
+
+    response = query_engine.query(prompt)
+    context_window = []
+    for node in response.source_nodes:
+        metadata = node.metadata
+        text = node.text
+        context_node = {'metadata': metadata, 'text': text}
+        context_window.append(context_node)
+
+    window = str(context_window) + "\n" + str(response.response)
+
+    template_prompt = """Context information is below.\n
+            ---------------------\n
+            {context_str}\n
+            ---------------------\n
+            Given the context information and not prior knowledge, answer the question: {query_str}\n
+            """
+    
+    prompt_modif = template_prompt.format(context_str=window, query_str=prompt)
+
+    st.session_state.history.append(ChatMessage(role=MessageRole.USER, content=prompt_modif))
 
     with st.chat_message("assistant"):
-        stream = llm.stream_chat(
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            # stream=True,
-        )
-        response = st.write_stream(stream)
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        stream = llm.stream_chat(st.session_state.history)
+        response = st.write_stream(stream_data(stream))
+
+    st.session_state.messages.append({"role": MessageRole.ASSISTANT, "content": response})
+    st.session_state.history.append(ChatMessage(role=MessageRole.ASSISTANT, content=response))
 
