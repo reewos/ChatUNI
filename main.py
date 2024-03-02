@@ -43,18 +43,17 @@ except:
 
 ### LLM ###
 llm = Gemini()
-pinecone = Pinecone()
 
 ### Pinecone setup ###
-pc = pinecone.init(api_key=os.environ["PINECONE_API_KEY"])
-pinecone_index = pc.Index("chatuni")
+pc = Pinecone(api_key=os.environ["PINECONE_API_KEY"])
+# pinecone_index = pc.Index("chatuni")
 
-### Pinecone vector store ###
-vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
-### Storage context ###
-storage_context = StorageContext.from_defaults(vector_store=vector_store)
-### Index ###
-index = VectorStoreIndex.from_storage_context(storage_context=storage_context, llm=llm)
+# ### Pinecone vector store ###
+# vector_store = PineconeVectorStore(pinecone_index=pinecone_index)
+# ### Storage context ###
+# storage_context = StorageContext.from_defaults(vector_store=vector_store)
+# ### Index ###
+# index = VectorStoreIndex.from_storage_context(storage_context=storage_context, llm=llm)
 
 
 # Initialize chat history
