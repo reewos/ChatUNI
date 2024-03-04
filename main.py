@@ -7,7 +7,6 @@ from pinecone import Pinecone
 from llama_index.core.llms import ChatMessage, MessageRole
 from llama_index.llms.gemini import Gemini
 from llama_index.vector_stores.pinecone import PineconeVectorStore
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from llama_index.core import Settings
 from llama_index.core import VectorStoreIndex
@@ -44,16 +43,15 @@ try:
 except:
     st.error("Error: Secrets")
 
+
 try:
     ### LLM ###
     llm = Gemini()
     ### Embeddings ###
-    embed_model = HuggingFaceEmbedding(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
+    Settings.embed_model = load_embed_model()
     ### Settings ###
     Settings.llm = llm
-    Settings.embed_model = embed_model
+    
 except:
     st.error("Error: LLM or Embedding Model")
 
