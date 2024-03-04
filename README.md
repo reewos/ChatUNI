@@ -1,7 +1,7 @@
 # ChatUNI
 ChatUNI es un chatbot con arquitectura RAG, desarrollado para atender consultas respecto a las resoluciones rectorales de la UNI. 
 
-## Problema
+## Desafío
 En la mayoría de casos, la comunidad universitaria de la UNI no están enterados de muchas oportunidades como de becas, actividades académicas y administrativas o nuevos reglamentos que aparecen en la resoluciones rectorales de la universidad. Si bien es cierto, las resoluciones de la universidad están alojadas de manera pública, el problema es buscar exactamente una información de interés para el usuario dentro de todas las resoluciones publicadas.
 
 ## Desarrollo
