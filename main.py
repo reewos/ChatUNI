@@ -77,16 +77,16 @@ if "history" not in st.session_state:
 ]
 
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-
 tab_chat, tab_info = st.tabs(["Chat", "Acerca"])
 chat_container = st.empty()
 with tab_chat:
     with chat_container:
+
+        # Display chat messages from history on app rerun
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
         # React to user input
         if prompt := st.chat_input("Hola ChatUNI"):
             # Display user message in chat message container
