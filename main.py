@@ -86,43 +86,44 @@ for message in st.session_state.messages:
 
 
 tab_chat, tab_info = st.tabs(["Chat", "Acerca"])
-
+chat_container = st.empty()
 with tab_chat:
-    # React to user input
-    if prompt := st.chat_input("Hola ChatUNI"):
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        st.session_state.messages.append({"role":MessageRole.USER, "content": prompt})
+    with chat_container:
+        # React to user input
+        if prompt := st.chat_input("Hola ChatUNI"):
+            # Display user message in chat message container
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            st.session_state.messages.append({"role":MessageRole.USER, "content": prompt})
 
-        response = query_engine.query(prompt)
-        context_window = []
-        for node in response.source_nodes:
-            metadata = node.metadata
-            text = node.text
-            context_node = {'metadata': metadata, 'text': text}
-            context_window.append(context_node)
+            response = query_engine.query(prompt)
+            context_window = []
+            for node in response.source_nodes:
+                metadata = node.metadata
+                text = node.text
+                context_node = {'metadata': metadata, 'text': text}
+                context_window.append(context_node)
 
-        window = str(context_window) + "\n" + str(response.response)
+            window = str(context_window) + "\n" + str(response.response)
 
-        template_prompt = """Context information is below.\n
-                ---------------------\n
-                {context_str}\n
-                ---------------------\n
-                Given the context information and not prior knowledge, answer the question: {query_str}\n
-                """
-        
-        prompt_modif = template_prompt.format(context_str=window, query_str=prompt)
+            template_prompt = """Context information is below.\n
+                    ---------------------\n
+                    {context_str}\n
+                    ---------------------\n
+                    Given the context information and not prior knowledge, answer the question: {query_str}\n
+                    """
+            
+            prompt_modif = template_prompt.format(context_str=window, query_str=prompt)
 
-        st.session_state.history.append(ChatMessage(role=MessageRole.USER, content=prompt_modif))
+            st.session_state.history.append(ChatMessage(role=MessageRole.USER, content=prompt_modif))
 
-        with st.chat_message("assistant"):
-            stream = llm.stream_chat(st.session_state.history)
-            response = st.write_stream(stream_data(stream))
+            with st.chat_message("assistant"):
+                stream = llm.stream_chat(st.session_state.history)
+                response = st.write_stream(stream_data(stream))
 
-        st.session_state.messages.append({"role": MessageRole.ASSISTANT, "content": response})
-        st.session_state.history.append(ChatMessage(role=MessageRole.ASSISTANT, content=response))
+            st.session_state.messages.append({"role": MessageRole.ASSISTANT, "content": response})
+            st.session_state.history.append(ChatMessage(role=MessageRole.ASSISTANT, content=response))
 
 with tab_info:
     st.markdown("")
