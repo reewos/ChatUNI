@@ -72,7 +72,12 @@ if "messages" not in st.session_state:
 
 if "history" not in st.session_state:
     st.session_state.history = [
-    ChatMessage(role=MessageRole.SYSTEM, content="Eres un asistente virtual que ayudará a interpretar o buscar información de resoluciones rectorales de la UNI."),
+    ChatMessage(role=MessageRole.SYSTEM,
+                content="""
+                Eres un asistente virtual llamado ChatUNI que ayudará a interpretar o buscar información de resoluciones rectorales de la UNI.
+                De preferencia responderás con la información de contexto.
+                Si no tiene la información de contexto, responda con información de la UNI (Universidad Nacional de Ingeniería del Perú).
+                """),
     # ChatMessage(role=MessageRole.ASSISTANT, content="Hola, soy un asistente virtual que te ayudará a revisar las resoluciones rectorales de la UNI."),
 ]
 
