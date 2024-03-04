@@ -13,6 +13,14 @@ from llama_index.core import VectorStoreIndex
 
 from utils import *
 
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
+@st.cache(allow_output_mutation=True)
+def load_embed_model():
+    return HuggingFaceEmbedding(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
 ### Set config ###
 st.set_page_config(
     page_title="ChatUNI",
@@ -96,23 +104,16 @@ with tab_chat:
             st.session_state.messages.append({"role":MessageRole.USER, "content": prompt})
 
             response = query_engine.query(prompt)
-            context_window = []
-            for node in response.source_nodes:
-                metadata = node.metadata
-                text = node.text
-                context_node = {'metadata': metadata, 'text': text}
-                context_window.append(context_node)
+            context_window = get_context_window(response)
 
-            window = str(context_window) + "\n" + str(response.response)
-
-            template_prompt = """Context information is below.\n
+            template_prompt = """La información de contexto está a continuación.\n
                     ---------------------\n
                     {context_str}\n
                     ---------------------\n
-                    Given the context information and not prior knowledge, answer the question: {query_str}\n
+                    Dada la información del contexto y no el conocimiento previo, responda la pregunta: {query_str}\n
                     """
             
-            prompt_modif = template_prompt.format(context_str=window, query_str=prompt)
+            prompt_modif = template_prompt.format(context_str=context_window, query_str=prompt)
 
             st.session_state.history.append(ChatMessage(role=MessageRole.USER, content=prompt_modif))
 
