@@ -13,14 +13,6 @@ from llama_index.core import VectorStoreIndex
 
 from utils import *
 
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
-@st.cache(allow_output_mutation=True)
-def load_embed_model():
-    return HuggingFaceEmbedding(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-
 ### Set config ###
 st.set_page_config(
     page_title="ChatUNI",
