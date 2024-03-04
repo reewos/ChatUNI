@@ -83,43 +83,41 @@ if "history" not in st.session_state:
 
 
 tab_chat, tab_info = st.tabs(["Chat", "Acerca"])
-chat_container = st.empty()
+# chat_container = st.empty()
 with tab_chat:
-    with chat_container:
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-        # Display chat messages from history on app rerun
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+    # React to user input
+    if prompt := st.chat_input("Hola ChatUNI"):
+        # Display user message in chat message container
+        with st.chat_message(MessageRole.USER):
+            st.markdown(prompt)
+        
+        st.session_state.messages.append({"role":MessageRole.USER, "content": prompt})
 
-        # React to user input
-        if prompt := st.chat_input("Hola ChatUNI"):
-            # Display user message in chat message container
-            with st.chat_message("user"):
-                st.markdown(prompt)
-            
-            st.session_state.messages.append({"role":MessageRole.USER, "content": prompt})
+        response = query_engine.query(prompt)
+        context_window = get_context_window(response)
 
-            response = query_engine.query(prompt)
-            context_window = get_context_window(response)
+        template_prompt = """La información de contexto está a continuación.\n
+                ---------------------\n
+                {context_str}\n
+                ---------------------\n
+                Dada la información del contexto y no el conocimiento previo, responda la pregunta: {query_str}\n
+                """
+        
+        prompt_modif = template_prompt.format(context_str=context_window, query_str=prompt)
 
-            template_prompt = """La información de contexto está a continuación.\n
-                    ---------------------\n
-                    {context_str}\n
-                    ---------------------\n
-                    Dada la información del contexto y no el conocimiento previo, responda la pregunta: {query_str}\n
-                    """
-            
-            prompt_modif = template_prompt.format(context_str=context_window, query_str=prompt)
+        st.session_state.history.append(ChatMessage(role=MessageRole.USER, content=prompt_modif))
 
-            st.session_state.history.append(ChatMessage(role=MessageRole.USER, content=prompt_modif))
+        with st.chat_message(MessageRole.ASSISTANT):
+            stream = llm.stream_chat(st.session_state.history)
+            response = st.write_stream(stream_data(stream))
 
-            with st.chat_message("assistant"):
-                stream = llm.stream_chat(st.session_state.history)
-                response = st.write_stream(stream_data(stream))
-
-            st.session_state.messages.append({"role": MessageRole.ASSISTANT, "content": response})
-            st.session_state.history.append(ChatMessage(role=MessageRole.ASSISTANT, content=response))
+        st.session_state.messages.append({"role": MessageRole.ASSISTANT, "content": response})
+        st.session_state.history.append(ChatMessage(role=MessageRole.ASSISTANT, content=response))
 
 with tab_info:
     st.markdown("")
