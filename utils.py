@@ -1,7 +1,13 @@
 import streamlit as st
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from pathlib import Path
 
-@st.cache(allow_output_mutation=True)
+@st.cache_data
+def read_markdown_file(markdown_file):
+    return Path(markdown_file).read_text(encoding='utf-8')
+
+# @st.cache(allow_output_mutation=True)
+@st.cache_resource
 def load_embed_model():
     return HuggingFaceEmbedding(
         model_name="sentence-transformers/all-MiniLM-L6-v2"

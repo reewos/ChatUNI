@@ -83,9 +83,9 @@ if "history" not in st.session_state:
 
 
 tab_chat, tab_info = st.tabs(["Chat", "Acerca"])
-chat_container = st.container()
 
 with tab_chat:
+    chat_container = st.container()
     with chat_container:
         # Display chat messages from history on app rerun
         for message in st.session_state.messages:
@@ -128,4 +128,5 @@ with tab_chat:
         st.session_state.history.append(ChatMessage(role=MessageRole.ASSISTANT, content=response))
 
 with tab_info:
-    st.markdown("")
+    info = read_markdown_file("README.md")
+    st.markdown(info)
